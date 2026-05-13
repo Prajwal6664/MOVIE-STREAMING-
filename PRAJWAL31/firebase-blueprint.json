@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "mediaItems": {
+      "title": "Media Item",
+      "description": "A movie or TV show in the catalog",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "rating": { "type": "number" },
+        "year": { "type": "number" },
+        "duration": { "type": "string" },
+        "genre": { "type": "array", "items": { "type": "string" } },
+        "language": { "type": "string", "enum": ["Bollywood", "Hollywood", "English", "Hindi", "Kannada"] },
+        "thumbnailUrl": { "type": "string" },
+        "bannerUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["movie", "tv-show"] }
+      },
+      "required": ["id", "title", "description", "rating", "year", "duration", "genre", "language", "thumbnailUrl", "bannerUrl", "mediaType"]
+    }
+  },
+  "firestore": {
+    "mediaItems": {
+      "schema": "mediaItems",
+      "description": "Collection of all movies and TV shows"
+    }
+  }
+}

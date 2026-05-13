@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && request.auth.token.email == 'u02cs25s0031@klebcadwd.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidMediaItem(data) {
+      return data.keys().hasAll(['id', 'title', 'description', 'rating', 'year', 'duration', 'genre', 'language', 'thumbnailUrl', 'bannerUrl', 'mediaType']) &&
+             data.keys().size() == 11 &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.rating is number && data.rating >= 0 && data.rating <= 10 &&
+             data.year is number && data.year >= 1800 && data.year <= 2100 &&
+             data.duration is string && data.duration.size() <= 50 &&
+             data.genre is list && data.genre.size() <= 10 &&
+             data.language in ['Bollywood', 'Hollywood', 'English', 'Hindi', 'Kannada'] &&
+             data.thumbnailUrl is string && data.thumbnailUrl.size() <= 2000 &&
+             data.bannerUrl is string && data.bannerUrl.size() <= 2000 &&
+             data.mediaType in ['movie', 'tv-show'];
+    }
+
+    match /mediaItems/{itemId} {
+      allow read: if true; // Public read for the catalog
+      
+      allow create: if isAdmin() && isValidId(itemId) && isValidMediaItem(incoming());
+      
+      allow update: if isAdmin() && isValidMediaItem(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'description', 'rating', 'year', 'duration', 'genre', 'language', 'thumbnailUrl', 'bannerUrl', 'mediaType'
+        ])
+      );
+      
+      allow delete: if isAdmin();
+    }
+  }
+}
